@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Games – mroxq</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { accent: 'var(--accent)' } } }
+    };
+  </script>
+  <style>
+    :root { --accent: #3b82f6; }
+    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); }
+    .card { transition: transform 0.2s; }
+    .card:hover { transform: scale(1.02); box-shadow: 0 0 10px var(--accent); }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  <!-- Nav with Settings (reuse) -->
+  <nav class="flex items-center justify-between p-4 glass rounded-b-lg shadow-md">
+    <button id="backBtn" class="p-2 hover:bg-white/10 rounded mr-2 cursor-pointer" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+    <h1 class="text-2xl font-bold text-accent">mroxq Games</h1>
+    <button id="settingsBtn" class="p-2 hover:bg-white/10 rounded" aria-label="Settings">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/></svg>
+    </button>
+  </nav>
+
+  <!-- Settings modal (same as index) -->
+  <div id="settingsModal" class="fixed inset-0 flex items-center justify-center bg-black/50 hidden">
+    <div class="bg-gray-900 p-6 rounded glass w-80">
+      <h2 class="text-xl mb-4 text-accent">Accent Color</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <button class="accent-option py-2 px-4 rounded" data-color="#3b82f6" style="background:#3b82f6">Blue</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#8b5cf6" style="background:#8b5cf6">Purple</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#ef4444" style="background:#ef4444">Red</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#22c55e" style="background:#22c55e">Green</button>
+      </div>
+      <button id="closeSettings" class="mt-4 w-full py-2 bg-gray-800 rounded hover:bg-gray-700">Close</button>
+    </div>
+  </div>
+
+  <!-- Search and category tabs -->
+    <section class="p-4 flex flex-col items-center">
+      <input id="searchInput" type="text" placeholder="Search games..." class="w-2/3 p-2 mb-4 rounded bg-gray-800 text-white focus:outline-none" />
+      <div id="categoryTabs" class="flex space-x-2 mb-4">
+        <button data-filter="all" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">All</button>
+        <button data-filter="arcade" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">Arcade></button>
+        <button data-filter="puzzle" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">Puzzle></button>
+        <button data-filter="strategy" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">Strategy></button>
+        <button data-filter="favorites" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">Favorites</button>
+      </div>
+    </section>
+  <section class="p-4 text-center">
+    <div id="xpDisplay" class="mb-4">XP: <span id="xpValue">0</span> | Level: <span id="levelValue">1</span></div>
+    <div class="w-64 bg-gray-700 rounded h-3 mx-auto">
+      <div id="xpBar" class="h-3 bg-accent rounded" style="width:0%"></div>
+    </div>
+  </section>
+
+  <!-- Games grid -->
+  <section class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Placeholder cards – will be populated by JS from games.json -->
+  </section>
+
+  <script>
+    // Theme handling (same as index)
+    const savedAccent = localStorage.getItem('mroxq_accent');
+    if (savedAccent) document.documentElement.style.setProperty('--accent', savedAccent);
+    const settingsBtn = document.getElementById('settingsBtn');
+    const modal = document.getElementById('settingsModal');
+    const closeBtn = document.getElementById('closeSettings');
+    settingsBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+    closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+    document.querySelectorAll('.accent-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const color = btn.dataset.color;
+        document.documentElement.style.setProperty('--accent', color);
+        localStorage.setItem('mroxq_accent', color);
+      });
+    });
+
+    // Search and category filtering
+    const searchInput = document.getElementById('searchInput');
+    const categoryTabs = document.getElementById('categoryTabs');
+    let currentFilter = 'all';
+    function filterGames() {
+      const query = searchInput.value.trim().toLowerCase();
+      const cards = document.querySelectorAll('.game-card');
+      cards.forEach(card => {
+        const title = card.dataset.title.toLowerCase();
+        const category = card.dataset.category;
+        const isFav = card.dataset.favorite === 'true';
+        let visible = true;
+        if (currentFilter === 'favorites') {
+          visible = isFav;
+        } else if (currentFilter !== 'all') {
+          visible = category === currentFilter;
+        }
+        if (query && !title.includes(query)) visible = false;
+        card.classList.toggle('hidden', !visible);
+      });
+    }
+    searchInput.addEventListener('input', filterGames);
+    categoryTabs.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') {
+        currentFilter = e.target.dataset.filter;
+        filterGames();
+      }
+    });
+
+    // XP module
+    const xpKey = 'mroxq_xp';
+    function loadXP() {
+      const data = JSON.parse(localStorage.getItem(xpKey) || '{"xp":0,"level":1}');
+      return data;
+    }
+    function saveXP(data) {
+      localStorage.setItem(xpKey, JSON.stringify(data));
+    }
+    function updateXPDisplay() {
+      const {xp, level} = loadXP();
+      document.getElementById('xpValue').textContent = xp;
+      document.getElementById('levelValue').textContent = level;
+      const percent = Math.min(100, (xp % 1000) / 10);
+      document.getElementById('xpBar').style.width = percent + '%';
+    }
+    updateXPDisplay();
+
+    // Favorites handling
+    function toggleFavorite(id, card) {
+      const favKey = 'mroxq_fav';
+      const arr = JSON.parse(localStorage.getItem(favKey) || '[]');
+      const idx = arr.indexOf(id);
+      let isFav;
+      if (idx === -1) { arr.push(id); isFav = true; } else { arr.splice(idx,1); isFav = false; }
+      localStorage.setItem(favKey, JSON.stringify(arr));
+      card.dataset.favorite = isFav;
+      card.classList.toggle('border-2', isFav);
+      card.classList.toggle('border-accent', isFav);
+    }
+
+    // Load games.json and render cards
+    fetch('games.json')
+      .then(r => r.json())
+      .then(games => {
+        const container = document.querySelector('section.grid');
+        const favKey = 'mroxq_fav';
+        const favArr = JSON.parse(localStorage.getItem(favKey) || '[]');
+        games.forEach(game => {
+          const card = document.createElement('div');
+          const isFav = favArr.includes(game.id);
+          card.className = 'glass p-4 rounded card flex flex-col items-center game-card';
+          card.dataset.title = game.title;
+          card.dataset.category = game.category;
+          card.dataset.favorite = isFav;
+          if (isFav) { card.classList.add('border-2','border-accent'); }
+          const title = document.createElement('h3');
+          title.className = 'text-accent mb-2';
+          title.textContent = game.title;
+          const iframe = document.createElement('iframe');
+          iframe.src = game.embedUrl;
+          iframe.className = 'w-full h-48 border border-gray-600 rounded';
+          iframe.loading = 'lazy';
+          const favBtn = document.createElement('button');
+          favBtn.innerHTML = '❤️';
+          favBtn.className = 'mt-2';
+          favBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleFavorite(game.id, card); });
+          card.appendChild(title);
+          card.appendChild(iframe);
+          card.appendChild(favBtn);
+          card.addEventListener('click', () => { window.open(game.embedUrl, '_blank'); });
+          container.appendChild(card);
+        });
+      });
+
+    // XP accrual simulation
+    setInterval(() => {
+      const data = loadXP();
+      data.xp += 10;
+      if (data.xp >= data.level * 1000) { data.level += 1; }
+      saveXP(data);
+      updateXPDisplay();
+    }, 10000);
+  <script>
+    const backBtn = document.getElementById('backBtn');
+    if (backBtn) backBtn.addEventListener('click', () => history.back());
+  </script>
+</html>
