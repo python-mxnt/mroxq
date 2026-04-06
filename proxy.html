@@ -15,15 +15,13 @@
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
-  <!-- Nav with Settings (reuse) -->
+  <!-- Nav with Settings -->
   <nav class="flex items-center justify-between p-4 glass rounded-t-lg shadow-md">
     <button id="backBtn" class="p-2 hover:bg-white/10 rounded mr-2 cursor-pointer" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
-    <button id="settingsBtn" class="p-2 hover:bg-white/10 rounded" aria-label="Settings">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/></svg>
-    </button>
+    <button id="settingsBtn" class="p-2 hover:bg-white/10 rounded" aria-label="Settings"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/></svg></button>
   </nav>
 
-  <!-- Settings modal (same as other pages) -->
+  <!-- Settings modal -->
   <div id="settingsModal" class="fixed inset-0 flex items-center justify-center bg-black/50 hidden">
     <div class="bg-gray-900 p-6 rounded glass w-80">
       <h2 class="text-xl mb-4 text-accent">Accent Color</h2>
@@ -39,21 +37,15 @@
 
   <!-- Main content -->
   <section class="flex-1 flex flex-col items-center justify-center p-4">
-    <!-- Omnibox -->
     <input id="omnibox" type="text" placeholder="Enter URL or search..." class="w-2/3 p-2 rounded bg-gray-800 text-white focus:outline-none" />
     <button id="goBtn" class="ml-2 px-4 py-2 bg-accent rounded hover:opacity-90">Go</button>
-
-    <!-- About:Blank launcher -->
     <button id="blankBtn" class="mt-4 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Open in About:Blank</button>
-
-    <!-- Iframe container (hidden until navigation) -->
     <div id="proxyContainer" class="w-full h-3/4 mt-6 hidden">
       <iframe id="proxyIframe" src="" class="w-full h-full border border-gray-600 rounded"></iframe>
     </div>
   </section>
 
   <script>
-    // Theme handling (same as other pages)
     const savedAccent = localStorage.getItem('mroxq_accent');
     if (savedAccent) document.documentElement.style.setProperty('--accent', savedAccent);
     const settingsBtn = document.getElementById('settingsBtn');
@@ -70,16 +62,12 @@
         localStorage.setItem('mroxq_accent', color);
       });
     });
-
-    // Proxy handling – route through Cloudflare Worker when URL is entered
     const workerBase = 'https://mroxq-proxy-111.verxateam.workers.dev';
     const omnibox = document.getElementById('omnibox');
     const goBtn = document.getElementById('goBtn');
     const iframe = document.getElementById('proxyIframe');
     const container = document.getElementById('proxyContainer');
-    function isURL(str) {
-      try { new URL(str.startsWith('http') ? str : 'https://' + str); return true; } catch { return false; }
-    }
+    function isURL(str) { try { new URL(str.startsWith('http') ? str : 'https://' + str); return true; } catch { return false; } }
     function handleProxy() {
       let query = omnibox.value.trim();
       if (!query) return;
@@ -96,24 +84,13 @@
     }
     goBtn.addEventListener('click', handleProxy);
     omnibox.addEventListener('keypress', e => { if (e.key === 'Enter') handleProxy(); });
-
-
-    // About:Blank mode – open full‑screen iframe without chrome
-    const blankBtn = document.getElementById('blankBtn');
-    blankBtn.addEventListener('click', () => {
+    document.getElementById('blankBtn').addEventListener('click', () => {
       const url = iframe.src || 'about:blank';
       const win = window.open('', '_blank');
       win.document.write(`<!DOCTYPE html><html><head><title>Stealth</title><style>body,html{margin:0;height:100%;background:#000}</style></head><body><iframe src="${url}" style="border:none;width:100%;height:100%"></iframe></body></html>`);
       win.document.close();
     });
-
-    // Panic key – Esc redirects to google.com (optional clear storage)
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') {
-        // Optionally clear storage – user can enable later; for now just redirect
-        window.location.href = 'https://www.google.com';
-      }
-    });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') window.location.href = 'https://www.google.com'; });
   </script>
 </body>
 </html>
