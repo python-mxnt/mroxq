@@ -1,0 +1,14 @@
+[
+  {
+    "id": "game1",
+    "title": "Cool Game 1",
+    "embedUrl": "https://example.com/game1",
+    "category": "arcade"
+  },
+  {
+    "id": "game2",
+    "title": "Cool Game 2",
+    "embedUrl": "https://example.com/game2",
+    "category": "puzzle"
+  }
+]
