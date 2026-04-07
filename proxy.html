@@ -70,7 +70,10 @@
   <!-- About:Blank launcher -->
   <button id="blankBtn" class="mt-4 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Open in About:Blank</button>
   <!-- Iframe container (hidden until navigation) -->
-  <div id="proxyContainer" class="w-full h-3/4 mt-6 hidden">
+  <div id="loader" class="hidden fixed inset-0 flex items-center justify-center bg-black/30">
+  <div class="animate-spin rounded-full border-4 border-primary border-t-transparent w-12 h-12"></div>
+</div>
+<div id="proxyContainer" class="w-full h-3/4 mt-6 hidden">
     <iframe id="proxyIframe" src="" class="w-full h-full border border-gray-600 rounded"></iframe>
   </div>
 
@@ -103,38 +106,59 @@
       });
     });
     // Proxy handling – route through Cloudflare Worker when URL is entered
-    const workerBase = 'https://mroxq-proxy-111.verxateam.workers.dev';
+    // Removed workerBase - using client-side fetch
     const omnibox = document.getElementById('omnibox');
     const goBtn = document.getElementById('goBtn');
     const iframe = document.getElementById('proxyIframe');
-    const container = document.getElementById('proxyContainer');
+    const loader = document.getElementById('loader');
     function isURL(str) {
       try { new URL(str.startsWith('http') ? str : 'https://' + str); return true; } catch { return false; }
     }
-    function handleProxy() {
-      let query = omnibox.value.trim();
+    async function handleProxyClientSide(){
+      const query = omnibox.value.trim();
       if (!query) return;
-      let target;
-      if (isURL(query)) {
-        const url = query.startsWith('http') ? query : 'https://' + query;
-        target = `${workerBase}?url=${encodeURIComponent(url)}`;
-      } else {
+      let url;
+      try { url = new URL(query.startsWith('http') ? query : 'https://' + query); }
+      catch {
         const encoded = encodeURIComponent(query);
-        target = `https://duckduckgo.com/?q=${encoded}`;
+        window.open(`https://duckduckgo.com/?q=${encoded}`,'_blank');
+        return;
       }
-      iframe.src = target;
-      container.classList.remove('hidden');
+
+      // Show loader
+      loader.classList.remove('hidden');
+
+      try {
+        const resp = await fetch(url.href, {mode:'cors', redirect:'follow'});
+        const contentType = resp.headers.get('content-type') || '';
+        if(resp.ok && contentType.includes('text/html')){
+          const html = await resp.text();
+          iframe.setAttribute('srcdoc', html);
+          container.classList.remove('hidden');
+        } else {
+          window.open(url.href,'_blank');
+        }
+      } catch(e){
+        window.open(url.href,'_blank');
+      } finally {
+        loader.classList.add('hidden');
+      }
     }
-    goBtn.addEventListener('click', handleProxy);
-    omnibox.addEventListener('keypress', e => { if (e.key === 'Enter') handleProxy(); });
+    goBtn.addEventListener('click', handleProxyClientSide);
+    omnibox.addEventListener('keypress', e => { if (e.key === 'Enter') handleProxyClientSide(); });
 
 
     // About:Blank mode – open full‑screen iframe without chrome
     const blankBtn = document.getElementById('blankBtn');
     blankBtn.addEventListener('click', () => {
-      const url = iframe.src || 'about:blank';
+      const srcdoc = iframe.getAttribute('srcdoc');
       const win = window.open('', '_blank');
-      win.document.write(`<!DOCTYPE html><html><head><title>Stealth</title><style>body,html{margin:0;height:100%;background:#000}</style></head><body><iframe src="${url}" style="border:none;width:100%;height:100%"></iframe></body></html>`);
+      if (srcdoc) {
+        win.document.write(`<!DOCTYPE html><html><head><title>Stealth</title><style>body,html{margin:0;height:100%;background:#000}</style></head><body>${srcdoc}</body></html>`);
+      } else {
+        const url = iframe.src || 'about:blank';
+        win.document.write(`<!DOCTYPE html><html><head><title>Stealth</title><style>body,html{margin:0;height:100%;background:#000}</style></head><body><iframe src="${url}" style="border:none;width:100%;height:100%"></iframe></body></html>`);
+      }
       win.document.close();
     });
 
