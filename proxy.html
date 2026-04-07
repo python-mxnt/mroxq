@@ -7,14 +7,30 @@
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = { theme: { extend: { colors: { accent: 'var(--accent)' } } } };
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7c3aed',
+            accent: '#a78bfa',
+            glass: 'rgba(255,255,255,0.08)'
+          },
+          backgroundImage: theme => ({
+            'hero-gradient': 'radial-gradient(at 50% 50%, rgba(124,58,237,0.3), transparent 70%)'
+          })
+        }
+      }
+    };
   </script>
   <style>
-    :root { --accent: #3b82f6; }
-    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); }
+    .bg-futuristic { background: #000; background: radial-gradient(circle at 20% 30%, rgba(124,58,237,0.2), transparent 40%),
+                               radial-gradient(circle at 80% 70%, rgba(124,58,237,0.15), transparent 45%),
+                               radial-gradient(circle at 50% 80%, rgba(124,58,237,0.1), transparent 50%); }
+    .glow-card { backdrop-filter: blur(12px); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+    .glow-button { background: linear-gradient(135deg, #7c3aed, #a78bfa); box-shadow: 0 0 10px rgba(124,58,237,0.6); }
   </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="bg-futuristic font-sans antialiased">
   <!-- Nav with Settings (reuse) -->
   <nav class="flex items-center justify-between p-4 glass rounded-t-lg shadow-md">
     <button id="backBtn" class="p-2 hover:bg-white/10 rounded mr-2 cursor-pointer" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
@@ -38,19 +54,25 @@
   </div>
 
   <!-- Main content -->
-  <section class="flex-1 flex flex-col items-center justify-center p-4">
-    <!-- Omnibox -->
-    <input id="omnibox" type="text" placeholder="Enter URL or search..." class="w-2/3 p-2 rounded bg-gray-800 text-white focus:outline-none" />
-    <button id="goBtn" class="ml-2 px-4 py-2 bg-accent rounded hover:opacity-90">Go</button>
-
-    <!-- About:Blank launcher -->
-    <button id="blankBtn" class="mt-4 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Open in About:Blank</button>
-
-    <!-- Iframe container (hidden until navigation) -->
-    <div id="proxyContainer" class="w-full h-3/4 mt-6 hidden">
-      <iframe id="proxyIframe" src="" class="w-full h-full border border-gray-600 rounded"></iframe>
+  <section class="flex flex-col items-center justify-center min-h-screen px-4 text-center relative overflow-hidden">
+    <h1 class="text-5xl md:text-6xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">Proxy</h1>
+    <p class="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl">A minimalist, high‑performance stealth proxy service.</p>
+    <div class="flex w-full max-w-lg bg-glass rounded-full overflow-hidden shadow-lg">
+      <input id="omnibox" type="text" placeholder="Enter URL or search..." class="flex-1 px-4 py-2 bg-transparent text-white placeholder-gray-400 focus:outline-none" />
+      <button id="goBtn" class="px-6 py-2 bg-primary text-white hover:bg-accent transition-colors">Go</button>
+    </div>
+    <div class="flex space-x-2 mt-4">
+      <button class="px-3 py-1 rounded-full bg-glass text-sm text-gray-300 hover:bg-primary hover:text-white">All</button>
+      <button class="px-3 py-1 rounded-full bg-glass text-sm text-gray-300 hover:bg-primary hover:text-white">Proxy</button>
+      <button class="px-3 py-1 rounded-full bg-glass text-sm text-gray-300 hover:bg-primary hover:text-white">Games</button>
     </div>
   </section>
+  <!-- About:Blank launcher -->
+  <button id="blankBtn" class="mt-4 px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">Open in About:Blank</button>
+  <!-- Iframe container (hidden until navigation) -->
+  <div id="proxyContainer" class="w-full h-3/4 mt-6 hidden">
+    <iframe id="proxyIframe" src="" class="w-full h-full border border-gray-600 rounded"></iframe>
+  </div>
 
   <script>
     // Theme handling (same as other pages)
@@ -71,6 +93,15 @@
       });
     });
 
+    // Navigation buttons (All / Proxy / Games)
+    document.querySelectorAll('section button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lbl = btn.textContent.trim().toLowerCase();
+        if (lbl === 'all') location.href='index.html';
+        else if (lbl === 'proxy') location.href='proxy.html';
+        else if (lbl === 'games') location.href='games.html';
+      });
+    });
     // Proxy handling – route through Cloudflare Worker when URL is entered
     const workerBase = 'https://mroxq-proxy-111.verxateam.workers.dev';
     const omnibox = document.getElementById('omnibox');
