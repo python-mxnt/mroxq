@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-black text-white">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Games – mroxq</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { accent: 'var(--accent)' } } } };
+  </script>
+  <style>
+    :root { --accent: #3b82f6; }
+    .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.12); }
+    .card { transition: transform 0.2s; }
+    .card:hover { transform: scale(1.02); box-shadow: 0 0 10px var(--accent); }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  <!-- Nav with Settings -->
+  <nav class="flex items-center justify-between p-4 glass rounded-b-lg shadow-md">
+    <button id="backBtn" class="p-2 hover:bg-white/10 rounded mr-2 cursor-pointer" aria-label="Back"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+    <h1 class="text-2xl font-bold text-accent">mroxq Games</h1>
+    <button id="settingsBtn" class="p-2 hover:bg-white/10 rounded" aria-label="Settings"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"/></svg></button>
+  </nav>
+
+  <!-- Settings modal -->
+  <div id="settingsModal" class="fixed inset-0 flex items-center justify-center bg-black/50 hidden">
+    <div class="bg-gray-900 p-6 rounded glass w-80">
+      <h2 class="text-xl mb-4 text-accent">Accent Color</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <button class="accent-option py-2 px-4 rounded" data-color="#3b82f6" style="background:#3b82f6">Blue</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#8b5cf6" style="background:#8b5cf6">Purple</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#ef4444" style="background:#ef4444">Red</button>
+        <button class="accent-option py-2 px-4 rounded" data-color="#22c55e" style="background:#22c55e">Green</button>
+      </div>
+      <button id="closeSettings" class="mt-4 w-full py-2 bg-gray-800 rounded hover:bg-gray-700">Close</button>
+    </div>
+  </div>
+
+  <!-- Search and category tabs -->
+  <section class="p-4 flex flex-col items-center">
+    <input id="searchInput" type="text" placeholder="Search games..." class="w-2/3 p-2 mb-4 rounded bg-gray-800 text-white focus:outline-none" />
+    <div id="categoryTabs" class="flex space-x-2 mb-4">
+      <button data-filter="all" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">All</button>
+      <button data-filter="arcade" class="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700">Arcade</button>
+    </div>
+    <div id="gamesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-5xl">
+      <!-- Game cards will be injected via JavaScript -->
+    </div>
+  </section>
+
+  <script>
+    const savedAccent = localStorage.getItem('mroxq_accent');
+    if (savedAccent) document.documentElement.style.setProperty('--accent', savedAccent);
+    document.getElementById('settingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('hidden'));
+    document.getElementById('closeSettings').addEventListener('click', () => document.getElementById('settingsModal').classList.add('hidden'));
+    document.querySelectorAll('.accent-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const color = btn.dataset.color;
+        document.documentElement.style.setProperty('--accent', color);
+        localStorage.setItem('mroxq_accent', color);
+      });
+    });
+    const games = [
+      { title: 'Snake', url: 'https://example.com/snake' },
+      { title: 'Tetris', url: 'https://example.com/tetris' },
+      { title: 'Minesweeper', url: 'https://example.com/minesweeper' }
+    ];
+    const container = document.getElementById('gamesContainer');
+    function renderGames(list) {
+      container.innerHTML = '';
+      list.forEach(g => {
+        const card = document.createElement('div');
+        card.className = 'glow-card card p-4 text-center';
+        card.innerHTML = `<h3 class="text-lg font-semibold text-gray-200 mb-2">${g.title}</h3><a href="${g.url}" target="_blank" class="text-sm text-primary underline">Play</a>`;
+        container.appendChild(card);
+      });
+    }
+    renderGames(games);
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const term = e.target.value.toLowerCase();
+      const filtered = games.filter(g => g.title.toLowerCase().includes(term));
+      renderGames(filtered);
+    });
+    document.querySelectorAll('#categoryTabs button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter;
+        if (filter === 'all') renderGames(games);
+      });
+    });
+  </script>
+</body>
+</html>
